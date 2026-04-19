@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电力工地 AI 助手</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; justify-content: center; padding: 16px; }
+  .container { width: 100%; max-width: 420px; }
+  .topbar { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #e8e8e8; }
+  .topbar-icon { width: 36px; height: 36px; border-radius: 8px; background: #e6f1fb; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+  .topbar-sub { font-size: 12px; color: #888; margin-top: 2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; }
+  .card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e8e8e8; }
+  .label { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .key-row { display: flex; gap: 8px; }
+  .key-row input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fafafa; }
+  .key-row input:focus { outline: none; border-color: #378ADD; }
+  .btn-save { padding: 8px 14px; background: #e6f1fb; color: #185FA5; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn-save:hover { background: #b5d4f4; }
+  .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; background: #fafafa; transition: all 0.2s; }
+  .upload-zone:hover { border-color: #378ADD; background: #f0f6ff; }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: #888; line-height: 1.6; }
+  .btn-upload { display: inline-block; margin-top: 10px; padding: 8px 18px; background: #e6f1fb; color: #185FA5; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+  .preview-wrap { border-radius: 10px; overflow: hidden; border: 1px solid #e8e8e8; margin-bottom: 12px; }
+  .preview-img { width: 100%; max-height: 200px; object-fit: cover; display: block; }
+  .preview-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fafafa; }
+  .preview-name { font-size: 12px; color: #888; }
+  .btn-remove { font-size: 12px; color: #e24b4a; background: none; border: none; cursor: pointer; }
+  textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fafafa; resize: none; font-family: inherit; line-height: 1.5; }
+  textarea:focus { outline: none; border-color: #378ADD; }
+  textarea::placeholder { color: #bbb; }
+  .btn-analyze { width: 100%; padding: 13px; background: #185FA5; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 4px; letter-spacing: 1px; }
+  .btn-analyze:hover { background: #0C447C; }
+  .btn-analyze:disabled { background: #ccc; cursor: not-allowed; }
+  .result-wrap { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; overflow: hidden; margin-top: 12px; }
+  .result-head { padding: 12px 16px; background: #e6f1fb; border-bottom: 1px solid #b5d4f4; display: flex; align-items: center; gap: 8px; }
+  .result-head-text { font-size: 14px; font-weight: 600; color: #0C447C; }
+  .result-body { padding: 14px 16px; }
+  .risk-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+  .risk-item:last-child { border-bottom: none; }
+  .risk-badge { flex-shrink: 0; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; height: fit-content; white-space: nowrap; }
+  .badge-high { background: #FCEBEB; color: #791F1F; }
+  .badge-mid { background: #FAEEDA; color: #633806; }
+  .badge-ok { background: #EAF3DE; color: #27500A; }
+  .risk-text { font-size: 13px; color: #1a1a1a; line-height: 1.6; }
+  .risk-ref { font-size: 11px; color: #888; margin-top: 3px; }
+  .divider { height: 1px; background: #f0f0f0; margin: 12px 0; }
+  .suggest-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+  .suggest-item { font-size: 13px; color: #555; line-height: 1.7; padding-left: 12px; position: relative; }
+  .suggest-item::before { content: "·"; position: absolute; left: 0; color: #378ADD; font-weight: bold; }
+  .loading-wrap { text-align: center; padding: 28px; }
+  .loading-dots { display: inline-flex; gap: 6px; }
+  .loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #378ADD; animation: blink 1.2s infinite; }
+  .loading-dot:nth-child(2) { animation-delay: .2s; }
+  .loading-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+  .loading-text { font-size: 13px; color: #888; margin-top: 10px; }
+  .error-msg { background: #FCEBEB; color: #791F1F; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-top: 12px; }
+  .success-key { border-color: #1D9E75 !important; }
+  .notice { font-size: 11px; color: #aaa; text-align: center; margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+ 
+  <div class="topbar">
+    <div class="topbar-icon">⚡</div>
+    <div>
+      <div class="topbar-title">电力工地 AI 助手</div>
+      <div class="topbar-sub">现场安全拍照分析 · DeepSeek驱动</div>
+    </div>
+    <div class="dot"></div>
+  </div>
+ 
+  <div class="card">
+    <div class="label">DeepSeek API Key（填入后保存，仅存在本设备）</div>
+    <div class="key-row">
+      <input type="password" id="apiKey" placeholder="sk-..." />
+      <button class="btn-save" onclick="saveKey()">保存</button>
+    </div>
+  </div>
+ 
+  <div class="card">
+    <div id="uploadArea">
+      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">点击拍照或上传现场照片<br>AI自动识别安全隐患和违规</div>
+        <button class="btn-upload">选择照片</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
+    </div>
+ 
+    <div id="previewArea" style="display:none">
+      <div class="preview-wrap">
+        <img id="previewImg" class="preview-img" src="" alt="现场照片">
+        <div class="preview-bar">
+          <span class="preview-name" id="fileName">photo.jpg</span>
+          <button class="btn-remove" onclick="removePhoto()">重新选择</button>
+        </div>
+      </div>
+    </div>
+ 
+    <div class="label" style="margin-top:12px">补充描述（可选，没有照片时必填）</div>
+    <textarea id="descText" rows="2" placeholder="例：10kV线路下方动土作业，距导线约4米，工人未戴安全帽"></textarea>
+ 
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">分析现场安全情况</button>
+    <div class="notice">分析结果仅供参考，重大安全决策请咨询专业工程师</div>
+  </div>
+ 
+  <div id="resultArea"></div>
+ 
+</div>
+ 
+<script>
+let imageBase64 = null;
+let apiKey = localStorage.getItem('ds_key') || '';
+ 
+window.onload = function() {
+  if(apiKey) {
+    document.getElementById('apiKey').value = apiKey;
+    document.querySelector('.key-row input').classList.add('success-key');
+    document.querySelector('.label').textContent = 'DeepSeek API Key 已保存 ✓';
+  }
+};
+ 
+function saveKey() {
+  apiKey = document.getElementById('apiKey').value.trim();
+  if(apiKey) {
+    localStorage.setItem('ds_key', apiKey);
+    document.querySelector('.key-row input').classList.add('success-key');
+    document.querySelector('.label').textContent = 'DeepSeek API Key 已保存 ✓';
+  } else {
+    alert('请先填入API Key');
+  }
+}
+ 
+function handleFile(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  document.getElementById('fileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    imageBase64 = ev.target.result;
+    document.getElementById('previewImg').src = ev.target.result;
+    document.getElementById('uploadArea').style.display = 'none';
+    document.getElementById('previewArea').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+ 
+function removePhoto() {
+  imageBase64 = null;
+  document.getElementById('uploadArea').style.display = 'block';
+  document.getElementById('previewArea').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('resultArea').innerHTML = '';
+}
+ 
+async function analyze() {
+  const desc = document.getElementById('descText').value.trim();
+ 
+  if(!apiKey) {
+    document.getElementById('resultArea').innerHTML = '<div class="error-msg">请先填写并保存 DeepSeek API Key</div>';
+    return;
+  }
+  if(!imageBase64 && !desc) {
+    document.getElementById('resultArea').innerHTML = '<div class="error-msg">请上传现场照片，或在描述框中输入现场情况</div>';
+    return;
+  }
+ 
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('resultArea').innerHTML = `
+    <div class="result-wrap">
+      <div class="loading-wrap">
+        <div class="loading-dots">
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+        </div>
+        <div class="loading-text">DeepSeek 正在分析现场安全情况...</div>
+      </div>
+    </div>`;
+ 
+  try {
+    const prompt = `你是一名专业的电力施工安全工程师，具备GB、DL等电力行业规范的深度知识。
+请分析${imageBase64 ? '这张现场照片' : '以下现场描述'}中存在的安全隐患和违规情况。
+${desc ? '现场补充说明：' + desc : ''}
+ 
+请严格按以下JSON格式输出，不要添加任何markdown标记、代码块符号或其他文字，直接输出纯JSON：
+{
+  "risks": [
+    {"level":"高风险","issue":"具体问题描述","ref":"对应规范编号和条文"},
+    {"level":"中风险","issue":"具体问题描述","ref":"对应规范编号和条文"},
+    {"level":"合规","issue":"符合规范的项目","ref":"对应规范编号"}
+  ],
+  "suggestions": ["具体整改建议1","具体整改建议2","具体整改建议3"]
+}`;
+ 
+    const content = imageBase64
+      ? [
+          { type: 'image_url', image_url: { url: imageBase64 } },
+          { type: 'text', text: prompt }
+        ]
+      : prompt;
+ 
+    const model = imageBase64 ? 'deepseek-chat' : 'deepseek-chat';
+ 
+    const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: content }],
+        temperature: 0.3,
+        max_tokens: 2000
+      })
+    });
+ 
+    if(!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      const errMsg = errData.error?.message || `HTTP ${resp.status}`;
+      throw new Error(errMsg);
+    }
+ 
+    const data = await resp.json();
+    const text = data.choices?.[0]?.message?.content || '';
+    const cleanText = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+ 
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanText);
+    } catch(e) {
+      throw new Error('AI返回格式异常，请重试');
+    }
+ 
+    const lvlClass = l => l.includes('高') ? 'badge-high' : l.includes('中') ? 'badge-mid' : 'badge-ok';
+    const risksHtml = (parsed.risks || []).map(r => `
+      <div class="risk-item">
+        <span class="risk-badge ${lvlClass(r.level)}">${r.level}</span>
+        <div>
+          <div class="risk-text">${r.issue}</div>
+          ${r.ref ? `<div class="risk-ref">依据：${r.ref}</div>` : ''}
+        </div>
+      </div>`).join('');
+ 
+    const sugHtml = (parsed.suggestions || []).map(s =>
+      `<div class="suggest-item">${s}</div>`).join('');
+ 
+    document.getElementById('resultArea').innerHTML = `
+      <div class="result-wrap">
+        <div class="result-head">
+          <span style="font-size:16px">⚡</span>
+          <span class="result-head-text">现场安全分析报告</span>
+        </div>
+        <div class="result-body">
+          ${risksHtml}
+          ${sugHtml ? `<div class="divider"></div><div class="suggest-title">整改建议</div>${sugHtml}` : ''}
+        </div>
+      </div>`;
+ 
+  } catch(e) {
+    document.getElementById('resultArea').innerHTML =
+      `<div class="error-msg">分析失败：${e.message}<br><br>常见原因：<br>· API Key 不正确<br>· 账号余额不足<br>· 网络连接问题</div>`;
+  }
+ 
+  document.getElementById('analyzeBtn').disabled = false;
+}
+</script>
+</body>
+</html>
