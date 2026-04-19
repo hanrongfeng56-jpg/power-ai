@@ -15,11 +15,6 @@
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; }
   .card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e8e8e8; }
   .label { font-size: 12px; color: #888; margin-bottom: 8px; }
-  .key-row { display: flex; gap: 8px; }
-  .key-row input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fafafa; }
-  .key-row input:focus { outline: none; border-color: #378ADD; }
-  .btn-save { padding: 8px 14px; background: #e6f1fb; color: #185FA5; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-  .btn-save:hover { background: #b5d4f4; }
   .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; background: #fafafa; transition: all 0.2s; }
   .upload-zone:hover { border-color: #378ADD; background: #f0f6ff; }
   .upload-icon { font-size: 32px; margin-bottom: 8px; }
@@ -77,14 +72,6 @@
   </div>
  
   <div class="card">
-    <div class="label" id="keyLabel">阿里云百炼 API Key（填入后自动保存到本设备）</div>
-    <div class="key-row">
-      <input type="password" id="apiKey" placeholder="sk-..." />
-      <button class="btn-save" onclick="saveKey()">保存</button>
-    </div>
-  </div>
- 
-  <div class="card">
     <div id="modeTip" class="mode-tip" style="display:none"></div>
  
     <div id="uploadArea">
@@ -118,28 +105,9 @@
 </div>
  
 <script>
+const WORKER_URL = 'https://power-ai-proxy.hanrongfeng56.workers.dev';
 let imageBase64 = null;
 let imageMediaType = 'image/jpeg';
-let apiKey = localStorage.getItem('qwen_key') || '';
- 
-window.onload = function() {
-  if(apiKey) {
-    document.getElementById('apiKey').value = apiKey;
-    document.getElementById('keyLabel').textContent = '阿里云百炼 API Key 已保存 ✓';
-    document.getElementById('keyLabel').style.color = '#0F6E56';
-  }
-};
- 
-function saveKey() {
-  apiKey = document.getElementById('apiKey').value.trim();
-  if(apiKey) {
-    localStorage.setItem('qwen_key', apiKey);
-    document.getElementById('keyLabel').textContent = '阿里云百炼 API Key 已保存 ✓';
-    document.getElementById('keyLabel').style.color = '#0F6E56';
-  } else {
-    alert('请先填入API Key');
-  }
-}
  
 function handleFile(e) {
   const file = e.target.files[0];
@@ -170,10 +138,6 @@ function removePhoto() {
 async function analyze() {
   const desc = document.getElementById('descText').value.trim();
  
-  if(!apiKey) {
-    document.getElementById('resultArea').innerHTML = '<div class="error-msg">请先填写并保存阿里云百炼 API Key</div>';
-    return;
-  }
   if(!imageBase64 && !desc) {
     document.getElementById('resultArea').innerHTML = '<div class="error-msg">请上传现场照片，或在描述框中输入现场情况</div>';
     return;
@@ -194,19 +158,19 @@ async function analyze() {
  
   try {
     const prompt = `你是一名专业的电力施工安全工程师，专注于GB、DL等中国电力行业规范。
-
+ 
 第一步：仔细观察${imageBase64 ? '照片' : '描述'}，列出你实际看到的具体内容，包括：人员状态、设备情况、环境条件、防护措施等。
 第二步：基于你第一步观察到的具体内容，逐一判断是否存在安全隐患。
 第三步：对每个隐患，只引用你确定存在的规范，不确定条文号时只写规范名称。
-
+ 
 严格要求：
 - 只分析你实际观察到的内容，不要套用通用模板
 - 不同照片的分析结果应该不同，因为现场情况不同
 - 如果某项内容在照片中看不清楚，明确说"照片中无法判断"
 - 绝对不允许编造条文编号
-
+ 
 ${desc ? '现场补充说明：' + desc : ''}
-
+ 
 直接输出纯JSON，不加任何markdown标记：
 {
   "risks": [
@@ -231,30 +195,18 @@ ${desc ? '现场补充说明：' + desc : ''}
       }];
     } else {
       model = 'qwen-max';
-      messages = [{
-        role: 'user',
-        content: prompt
-      }];
+      messages = [{ role: 'user', content: prompt }];
     }
  
-    const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+    const resp = await fetch(WORKER_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        temperature: 0.3,
-        max_tokens: 2000
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 2000 })
     });
  
     if(!resp.ok) {
       const errData = await resp.json().catch(() => ({}));
-      const errMsg = errData.error?.message || `HTTP ${resp.status}`;
-      throw new Error(errMsg);
+      throw new Error(errData.error?.message || `服务异常，请稍后重试`);
     }
  
     const data = await resp.json();
@@ -265,7 +217,7 @@ ${desc ? '现场补充说明：' + desc : ''}
     try {
       parsed = JSON.parse(cleanText);
     } catch(e) {
-      throw new Error('AI返回格式异常，请重试');
+      throw new Error('分析结果解析失败，请重试');
     }
  
     const lvlClass = l => l.includes('高') ? 'badge-high' : l.includes('中') ? 'badge-mid' : 'badge-ok';
@@ -295,7 +247,7 @@ ${desc ? '现场补充说明：' + desc : ''}
  
   } catch(e) {
     document.getElementById('resultArea').innerHTML =
-      `<div class="error-msg">分析失败：${e.message}<br><br>常见原因：<br>· API Key 不正确<br>· 账号余额不足<br>· 网络连接问题</div>`;
+      `<div class="error-msg">分析失败：${e.message}<br><br>请稍后重试，如持续失败请联系管理员</div>`;
   }
  
   document.getElementById('analyzeBtn').disabled = false;
