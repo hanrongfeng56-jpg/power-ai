@@ -33,7 +33,7 @@
   textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fafafa; resize: none; font-family: inherit; line-height: 1.5; }
   textarea:focus { outline: none; border-color: #378ADD; }
   textarea::placeholder { color: #bbb; }
-  .btn-analyze { width: 100%; padding: 13px; background: #185FA5; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 4px; letter-spacing: 1px; }
+  .btn-analyze { width: 100%; padding: 13px; background: #185FA5; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; letter-spacing: 1px; }
   .btn-analyze:hover { background: #0C447C; }
   .btn-analyze:disabled { background: #ccc; cursor: not-allowed; }
   .result-wrap { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; overflow: hidden; margin-top: 12px; }
@@ -50,7 +50,7 @@
   .risk-ref { font-size: 11px; color: #888; margin-top: 3px; }
   .divider { height: 1px; background: #f0f0f0; margin: 12px 0; }
   .suggest-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
-  .suggest-item { font-size: 13px; color: #555; line-height: 1.7; padding-left: 12px; position: relative; }
+  .suggest-item { font-size: 13px; color: #555; line-height: 1.7; padding-left: 12px; position: relative; margin-bottom: 4px; }
   .suggest-item::before { content: "·"; position: absolute; left: 0; color: #378ADD; font-weight: bold; }
   .loading-wrap { text-align: center; padding: 28px; }
   .loading-dots { display: inline-flex; gap: 6px; }
@@ -60,8 +60,8 @@
   @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
   .loading-text { font-size: 13px; color: #888; margin-top: 10px; }
   .error-msg { background: #FCEBEB; color: #791F1F; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-top: 12px; }
-  .success-key { border-color: #1D9E75 !important; }
   .notice { font-size: 11px; color: #aaa; text-align: center; margin-top: 8px; line-height: 1.5; }
+  .mode-tip { font-size: 11px; color: #1D9E75; background: #E1F5EE; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; }
 </style>
 </head>
 <body>
@@ -71,13 +71,13 @@
     <div class="topbar-icon">⚡</div>
     <div>
       <div class="topbar-title">电力工地 AI 助手</div>
-      <div class="topbar-sub">现场安全拍照分析 · DeepSeek驱动</div>
+      <div class="topbar-sub">现场安全拍照分析 · 通义千问视觉版</div>
     </div>
     <div class="dot"></div>
   </div>
  
   <div class="card">
-    <div class="label">DeepSeek API Key（填入后保存，仅存在本设备）</div>
+    <div class="label" id="keyLabel">阿里云百炼 API Key（填入后自动保存到本设备）</div>
     <div class="key-row">
       <input type="password" id="apiKey" placeholder="sk-..." />
       <button class="btn-save" onclick="saveKey()">保存</button>
@@ -85,6 +85,8 @@
   </div>
  
   <div class="card">
+    <div id="modeTip" class="mode-tip" style="display:none"></div>
+ 
     <div id="uploadArea">
       <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
         <div class="upload-icon">📷</div>
@@ -117,22 +119,23 @@
  
 <script>
 let imageBase64 = null;
-let apiKey = localStorage.getItem('ds_key') || '';
+let imageMediaType = 'image/jpeg';
+let apiKey = localStorage.getItem('qwen_key') || '';
  
 window.onload = function() {
   if(apiKey) {
     document.getElementById('apiKey').value = apiKey;
-    document.querySelector('.key-row input').classList.add('success-key');
-    document.querySelector('.label').textContent = 'DeepSeek API Key 已保存 ✓';
+    document.getElementById('keyLabel').textContent = '阿里云百炼 API Key 已保存 ✓';
+    document.getElementById('keyLabel').style.color = '#0F6E56';
   }
 };
  
 function saveKey() {
   apiKey = document.getElementById('apiKey').value.trim();
   if(apiKey) {
-    localStorage.setItem('ds_key', apiKey);
-    document.querySelector('.key-row input').classList.add('success-key');
-    document.querySelector('.label').textContent = 'DeepSeek API Key 已保存 ✓';
+    localStorage.setItem('qwen_key', apiKey);
+    document.getElementById('keyLabel').textContent = '阿里云百炼 API Key 已保存 ✓';
+    document.getElementById('keyLabel').style.color = '#0F6E56';
   } else {
     alert('请先填入API Key');
   }
@@ -141,13 +144,16 @@ function saveKey() {
 function handleFile(e) {
   const file = e.target.files[0];
   if(!file) return;
+  imageMediaType = file.type || 'image/jpeg';
   document.getElementById('fileName').textContent = file.name;
   const reader = new FileReader();
   reader.onload = function(ev) {
-    imageBase64 = ev.target.result;
+    imageBase64 = ev.target.result.split(',')[1];
     document.getElementById('previewImg').src = ev.target.result;
     document.getElementById('uploadArea').style.display = 'none';
     document.getElementById('previewArea').style.display = 'block';
+    document.getElementById('modeTip').style.display = 'block';
+    document.getElementById('modeTip').textContent = '已上传照片，将使用视觉模型分析';
   };
   reader.readAsDataURL(file);
 }
@@ -156,6 +162,7 @@ function removePhoto() {
   imageBase64 = null;
   document.getElementById('uploadArea').style.display = 'block';
   document.getElementById('previewArea').style.display = 'none';
+  document.getElementById('modeTip').style.display = 'none';
   document.getElementById('fileInput').value = '';
   document.getElementById('resultArea').innerHTML = '';
 }
@@ -164,7 +171,7 @@ async function analyze() {
   const desc = document.getElementById('descText').value.trim();
  
   if(!apiKey) {
-    document.getElementById('resultArea').innerHTML = '<div class="error-msg">请先填写并保存 DeepSeek API Key</div>';
+    document.getElementById('resultArea').innerHTML = '<div class="error-msg">请先填写并保存阿里云百炼 API Key</div>';
     return;
   }
   if(!imageBase64 && !desc) {
@@ -181,7 +188,7 @@ async function analyze() {
           <div class="loading-dot"></div>
           <div class="loading-dot"></div>
         </div>
-        <div class="loading-text">DeepSeek 正在分析现场安全情况...</div>
+        <div class="loading-text">${imageBase64 ? '正在分析现场照片...' : '正在分析现场情况...'}</div>
       </div>
     </div>`;
  
@@ -190,7 +197,7 @@ async function analyze() {
 请分析${imageBase64 ? '这张现场照片' : '以下现场描述'}中存在的安全隐患和违规情况。
 ${desc ? '现场补充说明：' + desc : ''}
  
-请严格按以下JSON格式输出，不要添加任何markdown标记、代码块符号或其他文字，直接输出纯JSON：
+请严格按以下JSON格式输出，不要添加任何markdown标记或其他文字，直接输出纯JSON：
 {
   "risks": [
     {"level":"高风险","issue":"具体问题描述","ref":"对应规范编号和条文"},
@@ -200,16 +207,27 @@ ${desc ? '现场补充说明：' + desc : ''}
   "suggestions": ["具体整改建议1","具体整改建议2","具体整改建议3"]
 }`;
  
-    const content = imageBase64
-      ? [
-          { type: 'image_url', image_url: { url: imageBase64 } },
+    let messages;
+    let model;
+ 
+    if(imageBase64) {
+      model = 'qwen-vl-max';
+      messages = [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${imageMediaType};base64,${imageBase64}` } },
           { type: 'text', text: prompt }
         ]
-      : prompt;
+      }];
+    } else {
+      model = 'qwen-max';
+      messages = [{
+        role: 'user',
+        content: prompt
+      }];
+    }
  
-    const model = imageBase64 ? 'deepseek-chat' : 'deepseek-chat';
- 
-    const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -217,7 +235,7 @@ ${desc ? '现场补充说明：' + desc : ''}
       },
       body: JSON.stringify({
         model: model,
-        messages: [{ role: 'user', content: content }],
+        messages: messages,
         temperature: 0.3,
         max_tokens: 2000
       })
