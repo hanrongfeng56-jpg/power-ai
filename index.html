@@ -196,7 +196,7 @@ async function analyze() {
     const prompt = `你是一名专业的电力施工安全工程师，具备GB、DL等电力行业规范的深度知识。
 请分析${imageBase64 ? '这张现场照片' : '以下现场描述'}中存在的安全隐患和违规情况。
 ${desc ? '现场补充说明：' + desc : ''}
- 
+
 请严格按以下JSON格式输出，不要添加任何markdown标记或其他文字，直接输出纯JSON：
 {
   "risks": [
