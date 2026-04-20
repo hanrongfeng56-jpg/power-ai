@@ -77,7 +77,8 @@
   .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .log-table th, .log-table td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; vertical-align: top; }
   .log-table th { background: #f5f5f5; font-weight: 600; color: #1a1a1a; white-space: nowrap; width: 90px; }
-  .log-table td { color: #1a1a1a; line-height: 1.7; min-height: 60px; }
+  .log-table td { color: #1a1a1a; line-height: 1.7; }
+  .log-table .content-row td { min-height: 60px; height: 60px; }
  
   /* 加载 */
   .loading-wrap { text-align: center; padding: 28px; }
@@ -365,7 +366,7 @@ ${content}
  
     const rows = ['施工情况','质量情况','安全情况','其他事项','次日计划'];
     const tableRows = rows.map(key => `
-      <tr>
+      <tr class="content-row">
         <th>${key}</th>
         <td>${parsed[key] || ''}</td>
       </tr>`).join('');
@@ -381,7 +382,8 @@ ${content}
             <tr><th>施工部位</th><td>${location}</td></tr>
             <tr><th>出勤人数</th><td>${workers || '--'}人</td></tr>
             ${tableRows}
-            <tr><th>记录人</th><td></td><th>负责人签字</th><td></td></tr>
+            <tr><th>记录人</th><td>&nbsp;</td></tr>
+            <tr><th>负责人签字</th><td>&nbsp;</td></tr>
           </table>
           <button class="btn-copy" onclick="copyLog()">复制日志内容</button>
         </div>
@@ -429,3 +431,4 @@ function loadingHTML(text) {
 </script>
 </body>
 </html>
+ 
