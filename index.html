@@ -3,50 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>电力工地 AI 助手</title>
+<title>安工盾 · 电力施工AI助手</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; justify-content: center; padding: 16px; }
-  .container { width: 100%; max-width: 420px; }
-  .topbar { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #e8e8e8; }
-  .topbar-icon { width: 36px; height: 36px; border-radius: 8px; background: #e6f1fb; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; padding-bottom: 70px; }
+ 
+  /* 顶部栏 */
+  .topbar { background: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 10; }
+  .topbar-icon { width: 32px; height: 32px; border-radius: 8px; background: #e6f1fb; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
   .topbar-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
-  .topbar-sub { font-size: 12px; color: #888; margin-top: 2px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; }
+  .topbar-sub { font-size: 11px; color: #888; margin-top: 1px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; }
+ 
+  /* 页面容器 */
+  .page { display: none; padding: 12px 16px; max-width: 480px; margin: 0 auto; }
+  .page.active { display: block; }
+ 
+  /* 卡片 */
   .card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e8e8e8; }
-  .label { font-size: 12px; color: #888; margin-bottom: 8px; }
-  .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; background: #fafafa; transition: all 0.2s; }
+  .label { font-size: 12px; color: #888; margin-bottom: 6px; }
+ 
+  /* 表单元素 */
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 13px; color: #1a1a1a; background: #fafafa; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #378ADD; }
+  textarea { resize: none; line-height: 1.5; }
+ 
+  /* 两列表单 */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-item { margin-bottom: 10px; }
+  .form-item:last-child { margin-bottom: 0; }
+ 
+  /* 按钮 */
+  .btn-primary { width: 100%; padding: 12px; background: #185FA5; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; }
+  .btn-primary:hover { background: #0C447C; }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-copy { width: 100%; padding: 10px; background: #f0f6ff; border: 1px solid #b5d4f4; border-radius: 8px; color: #185FA5; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .btn-copy:hover { background: #e6f1fb; }
+  .btn-upload { padding: 7px 14px; background: #e6f1fb; color: #185FA5; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+ 
+  /* 上传区 */
+  .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; background: #fafafa; }
   .upload-zone:hover { border-color: #378ADD; background: #f0f6ff; }
-  .upload-icon { font-size: 32px; margin-bottom: 8px; }
-  .upload-text { font-size: 13px; color: #888; line-height: 1.6; }
-  .btn-upload { display: inline-block; margin-top: 10px; padding: 8px 18px; background: #e6f1fb; color: #185FA5; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
-  .preview-wrap { border-radius: 10px; overflow: hidden; border: 1px solid #e8e8e8; margin-bottom: 12px; }
-  .preview-img { width: 100%; max-height: 200px; object-fit: cover; display: block; }
-  .preview-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fafafa; }
+  .upload-text { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 10px; }
+  .preview-wrap { border-radius: 10px; overflow: hidden; border: 1px solid #e8e8e8; margin-bottom: 10px; }
+  .preview-img { width: 100%; max-height: 180px; object-fit: cover; display: block; }
+  .preview-bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: #fafafa; }
   .preview-name { font-size: 12px; color: #888; }
   .btn-remove { font-size: 12px; color: #e24b4a; background: none; border: none; cursor: pointer; }
-  textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fafafa; resize: none; font-family: inherit; line-height: 1.5; }
-  textarea:focus { outline: none; border-color: #378ADD; }
-  textarea::placeholder { color: #bbb; }
-  .btn-analyze { width: 100%; padding: 13px; background: #185FA5; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; letter-spacing: 1px; }
-  .btn-analyze:hover { background: #0C447C; }
-  .btn-analyze:disabled { background: #ccc; cursor: not-allowed; }
+  .mode-tip { font-size: 11px; color: #1D9E75; background: #E1F5EE; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; }
+ 
+  /* 结果区 */
   .result-wrap { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; overflow: hidden; margin-top: 12px; }
-  .result-head { padding: 12px 16px; background: #e6f1fb; border-bottom: 1px solid #b5d4f4; display: flex; align-items: center; gap: 8px; }
-  .result-head-text { font-size: 14px; font-weight: 600; color: #0C447C; }
+  .result-head { padding: 10px 16px; background: #e6f1fb; border-bottom: 1px solid #b5d4f4; display: flex; align-items: center; gap: 8px; }
+  .result-head-text { font-size: 13px; font-weight: 600; color: #0C447C; }
   .result-body { padding: 14px 16px; }
-  .risk-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+  .risk-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; }
   .risk-item:last-child { border-bottom: none; }
-  .risk-badge { flex-shrink: 0; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; height: fit-content; white-space: nowrap; }
+  .risk-badge { flex-shrink: 0; font-size: 11px; padding: 3px 7px; border-radius: 6px; font-weight: 600; height: fit-content; white-space: nowrap; }
   .badge-high { background: #FCEBEB; color: #791F1F; }
   .badge-mid { background: #FAEEDA; color: #633806; }
   .badge-ok { background: #EAF3DE; color: #27500A; }
   .risk-text { font-size: 13px; color: #1a1a1a; line-height: 1.6; }
-  .risk-ref { font-size: 11px; color: #888; margin-top: 3px; }
-  .divider { height: 1px; background: #f0f0f0; margin: 12px 0; }
-  .suggest-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
-  .suggest-item { font-size: 13px; color: #555; line-height: 1.7; padding-left: 12px; position: relative; margin-bottom: 4px; }
+  .risk-ref { font-size: 11px; color: #888; margin-top: 2px; }
+  .divider { height: 1px; background: #f0f0f0; margin: 10px 0; }
+  .suggest-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+  .suggest-item { font-size: 13px; color: #555; line-height: 1.7; padding-left: 12px; position: relative; margin-bottom: 3px; }
   .suggest-item::before { content: "·"; position: absolute; left: 0; color: #378ADD; font-weight: bold; }
+ 
+  /* 日志表格 */
+  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .log-table th, .log-table td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; vertical-align: top; }
+  .log-table th { background: #f5f5f5; font-weight: 600; color: #1a1a1a; white-space: nowrap; width: 90px; }
+  .log-table td { color: #1a1a1a; line-height: 1.7; min-height: 60px; }
+ 
+  /* 加载 */
   .loading-wrap { text-align: center; padding: 28px; }
   .loading-dots { display: inline-flex; gap: 6px; }
   .loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #378ADD; animation: blink 1.2s infinite; }
@@ -54,54 +87,121 @@
   .loading-dot:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
   .loading-text { font-size: 13px; color: #888; margin-top: 10px; }
+ 
+  /* 错误 */
   .error-msg { background: #FCEBEB; color: #791F1F; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-top: 12px; }
   .notice { font-size: 11px; color: #aaa; text-align: center; margin-top: 8px; line-height: 1.5; }
-  .mode-tip { font-size: 11px; color: #1D9E75; background: #E1F5EE; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; }
+ 
+  /* 底部导航 */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e8e8e8; display: flex; z-index: 10; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; cursor: pointer; color: #aaa; font-size: 11px; gap: 4px; border: none; background: none; }
+  .nav-item.active { color: #185FA5; }
+  .nav-icon { font-size: 20px; }
 </style>
 </head>
 <body>
-<div class="container">
  
-  <div class="topbar">
-    <div class="topbar-icon">⚡</div>
-    <div>
-      <div class="topbar-title">电力工地 AI 助手</div>
-      <div class="topbar-sub">现场安全拍照分析 · 通义千问视觉版</div>
-    </div>
-    <div class="dot"></div>
+<div class="topbar">
+  <div class="topbar-icon">🛡️</div>
+  <div>
+    <div class="topbar-title">安工盾</div>
+    <div class="topbar-sub">电力施工AI助手</div>
   </div>
+  <div class="dot"></div>
+</div>
+ 
+<!-- 页面一：安全分析 -->
+<div class="page active" id="page-safety">
  
   <div class="card">
     <div id="modeTip" class="mode-tip" style="display:none"></div>
- 
     <div id="uploadArea">
       <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon">📷</div>
-        <div class="upload-text">点击拍照或上传现场照片<br>AI自动识别安全隐患和违规</div>
+        <div class="upload-text">📷 点击拍照或上传现场照片<br>AI自动识别安全隐患和违规</div>
         <button class="btn-upload">选择照片</button>
       </div>
       <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
     </div>
- 
     <div id="previewArea" style="display:none">
       <div class="preview-wrap">
         <img id="previewImg" class="preview-img" src="" alt="现场照片">
         <div class="preview-bar">
-          <span class="preview-name" id="fileName">photo.jpg</span>
+          <span class="preview-name" id="fileName"></span>
           <button class="btn-remove" onclick="removePhoto()">重新选择</button>
         </div>
       </div>
     </div>
- 
-    <div class="label" style="margin-top:12px">补充描述（可选，没有照片时必填）</div>
-    <textarea id="descText" rows="2" placeholder="例：10kV线路下方动土作业，距导线约4米，工人未戴安全帽"></textarea>
- 
-    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">分析现场安全情况</button>
-    <div class="notice">分析结果仅供参考，重大安全决策请咨询专业工程师</div>
+    <div class="form-item" style="margin-top:10px">
+      <div class="label">补充描述（可选，没有照片时必填）</div>
+      <textarea id="safetyDesc" rows="2" placeholder="例：10kV线路下方动土作业，距导线约4米"></textarea>
+    </div>
+    <button class="btn-primary" id="safetyBtn" onclick="analyzeSafety()">分析现场安全情况</button>
+    <div class="notice">分析结果仅供参考，重大决策请咨询专业工程师</div>
   </div>
  
-  <div id="resultArea"></div>
+  <div id="safetyResult"></div>
+</div>
  
+<!-- 页面二：日志生成 -->
+<div class="page" id="page-log">
+ 
+  <div class="card">
+    <div class="form-row">
+      <div>
+        <div class="label">日期</div>
+        <input type="date" id="logDate">
+      </div>
+      <div>
+        <div class="label">天气</div>
+        <select id="logWeather">
+          <option>晴</option>
+          <option>多云</option>
+          <option>阴</option>
+          <option>小雨</option>
+          <option>中雨</option>
+          <option>大雨</option>
+          <option>雷雨</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <div class="label">气温（℃）</div>
+        <input type="text" id="logTemp" placeholder="例：18~26">
+      </div>
+      <div>
+        <div class="label">出勤人数</div>
+        <input type="number" id="logWorkers" placeholder="例：8" min="1">
+      </div>
+    </div>
+    <div class="form-item">
+      <div class="label">工程名称</div>
+      <input type="text" id="logProject" placeholder="例：某某110kV输变电工程">
+    </div>
+    <div class="form-item">
+      <div class="label">施工部位/工序</div>
+      <input type="text" id="logLocation" placeholder="例：3号杆基础浇筑">
+    </div>
+    <div class="form-item">
+      <div class="label">今天干了什么（用大白话描述）</div>
+      <textarea id="logContent" rows="4" placeholder="例：今天完成了3号和4号杆的基础浇筑，下午对接地网进行了敷设，完成约50米，工人都戴了安全帽，没有出现安全问题"></textarea>
+    </div>
+    <button class="btn-primary" id="logBtn" onclick="generateLog()">生成施工日志</button>
+  </div>
+ 
+  <div id="logResult"></div>
+</div>
+ 
+<!-- 底部导航 -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="nav-safety" onclick="switchPage('safety')">
+    <span class="nav-icon">🔍</span>
+    安全分析
+  </button>
+  <button class="nav-item" id="nav-log" onclick="switchPage('log')">
+    <span class="nav-icon">📋</span>
+    日志生成
+  </button>
 </div>
  
 <script>
@@ -109,6 +209,18 @@ const WORKER_URL = 'https://power-ai-proxy.hanrongfeng56.workers.dev';
 let imageBase64 = null;
 let imageMediaType = 'image/jpeg';
  
+// 初始化日期为今天
+document.getElementById('logDate').valueAsDate = new Date();
+ 
+// 页面切换
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+ 
+// 上传图片
 function handleFile(e) {
   const file = e.target.files[0];
   if(!file) return;
@@ -132,41 +244,28 @@ function removePhoto() {
   document.getElementById('previewArea').style.display = 'none';
   document.getElementById('modeTip').style.display = 'none';
   document.getElementById('fileInput').value = '';
-  document.getElementById('resultArea').innerHTML = '';
+  document.getElementById('safetyResult').innerHTML = '';
 }
  
-async function analyze() {
-  const desc = document.getElementById('descText').value.trim();
- 
+// 安全分析
+async function analyzeSafety() {
+  const desc = document.getElementById('safetyDesc').value.trim();
   if(!imageBase64 && !desc) {
-    document.getElementById('resultArea').innerHTML = '<div class="error-msg">请上传现场照片，或在描述框中输入现场情况</div>';
+    document.getElementById('safetyResult').innerHTML = '<div class="error-msg">请上传现场照片或输入描述</div>';
     return;
   }
+  document.getElementById('safetyBtn').disabled = true;
+  document.getElementById('safetyResult').innerHTML = loadingHTML('正在分析现场安全情况...');
  
-  document.getElementById('analyzeBtn').disabled = true;
-  document.getElementById('resultArea').innerHTML = `
-    <div class="result-wrap">
-      <div class="loading-wrap">
-        <div class="loading-dots">
-          <div class="loading-dot"></div>
-          <div class="loading-dot"></div>
-          <div class="loading-dot"></div>
-        </div>
-        <div class="loading-text">${imageBase64 ? '正在分析现场照片...' : '正在分析现场情况...'}</div>
-      </div>
-    </div>`;
- 
-  try {
-    const prompt = `你是一名专业的电力施工安全工程师，专注于GB、DL等中国电力行业规范。
+  const prompt = `你是一名专业的电力施工安全工程师，专注于GB、DL等中国电力行业规范。
  
 第一步：仔细观察${imageBase64 ? '照片' : '描述'}，列出你实际看到的具体内容，包括：人员状态、设备情况、环境条件、防护措施等。
-第二步：基于你第一步观察到的具体内容，逐一判断是否存在安全隐患。
+第二步：基于第一步观察到的具体内容，逐一判断是否存在安全隐患。
 第三步：对每个隐患，只引用你确定存在的规范，不确定条文号时只写规范名称。
  
 严格要求：
-- 只分析你实际观察到的内容，不要套用通用模板
-- 不同照片的分析结果应该不同，因为现场情况不同
-- 如果某项内容在照片中看不清楚，明确说"照片中无法判断"
+- 只分析实际观察到的内容，不套用通用模板
+- 看不清楚的明确说"照片中无法判断"
 - 绝对不允许编造条文编号
  
 ${desc ? '现场补充说明：' + desc : ''}
@@ -174,54 +273,27 @@ ${desc ? '现场补充说明：' + desc : ''}
 直接输出纯JSON，不加任何markdown标记：
 {
   "risks": [
-    {"level":"高风险","issue":"基于照片实际观察到的具体问题","ref":"规范名称"},
-    {"level":"中风险","issue":"基于照片实际观察到的具体问题","ref":"规范名称"},
-    {"level":"合规","issue":"照片中实际符合规范的项目","ref":"规范名称"}
+    {"level":"高风险","issue":"具体问题","ref":"规范名称"},
+    {"level":"中风险","issue":"具体问题","ref":"规范名称"},
+    {"level":"合规","issue":"符合项","ref":"规范名称"}
   ],
-  "suggestions": ["针对本次具体现场的整改建议1","建议2","建议3"]
+  "suggestions": ["整改建议1","整改建议2","整改建议3"]
 }`;
  
-    let messages;
-    let model;
- 
-    if(imageBase64) {
-      model = 'qwen-vl-max';
-      messages = [{
-        role: 'user',
-        content: [
+  try {
+    const messages = imageBase64
+      ? [{ role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:${imageMediaType};base64,${imageBase64}` } },
           { type: 'text', text: prompt }
-        ]
-      }];
-    } else {
-      model = 'qwen-max';
-      messages = [{ role: 'user', content: prompt }];
-    }
+        ]}]
+      : [{ role: 'user', content: prompt }];
  
-    const resp = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 2000 })
-    });
- 
-    if(!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `服务异常，请稍后重试`);
-    }
- 
-    const data = await resp.json();
+    const data = await callAI(imageBase64 ? 'qwen-vl-max' : 'qwen-max', messages);
     const text = data.choices?.[0]?.message?.content || '';
-    const cleanText = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
- 
-    let parsed;
-    try {
-      parsed = JSON.parse(cleanText);
-    } catch(e) {
-      throw new Error('分析结果解析失败，请重试');
-    }
+    const parsed = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
  
     const lvlClass = l => l.includes('高') ? 'badge-high' : l.includes('中') ? 'badge-mid' : 'badge-ok';
-    const risksHtml = (parsed.risks || []).map(r => `
+    const risksHtml = (parsed.risks||[]).map(r => `
       <div class="risk-item">
         <span class="risk-badge ${lvlClass(r.level)}">${r.level}</span>
         <div>
@@ -229,28 +301,130 @@ ${desc ? '现场补充说明：' + desc : ''}
           ${r.ref ? `<div class="risk-ref">依据：${r.ref}</div>` : ''}
         </div>
       </div>`).join('');
+    const sugHtml = (parsed.suggestions||[]).map(s => `<div class="suggest-item">${s}</div>`).join('');
  
-    const sugHtml = (parsed.suggestions || []).map(s =>
-      `<div class="suggest-item">${s}</div>`).join('');
- 
-    document.getElementById('resultArea').innerHTML = `
+    document.getElementById('safetyResult').innerHTML = `
       <div class="result-wrap">
-        <div class="result-head">
-          <span style="font-size:16px">⚡</span>
-          <span class="result-head-text">现场安全分析报告</span>
-        </div>
+        <div class="result-head"><span>⚡</span><span class="result-head-text">现场安全分析报告</span></div>
         <div class="result-body">
           ${risksHtml}
           ${sugHtml ? `<div class="divider"></div><div class="suggest-title">整改建议</div>${sugHtml}` : ''}
         </div>
       </div>`;
- 
   } catch(e) {
-    document.getElementById('resultArea').innerHTML =
-      `<div class="error-msg">分析失败：${e.message}<br><br>请稍后重试，如持续失败请联系管理员</div>`;
+    document.getElementById('safetyResult').innerHTML = `<div class="error-msg">分析失败：${e.message}<br>请稍后重试</div>`;
+  }
+  document.getElementById('safetyBtn').disabled = false;
+}
+ 
+// 日志生成
+async function generateLog() {
+  const date = document.getElementById('logDate').value;
+  const weather = document.getElementById('logWeather').value;
+  const temp = document.getElementById('logTemp').value.trim();
+  const workers = document.getElementById('logWorkers').value.trim();
+  const project = document.getElementById('logProject').value.trim();
+  const location = document.getElementById('logLocation').value.trim();
+  const content = document.getElementById('logContent').value.trim();
+ 
+  if(!project || !location || !content) {
+    document.getElementById('logResult').innerHTML = '<div class="error-msg">请填写工程名称、施工部位和今日内容</div>';
+    return;
   }
  
-  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('logBtn').disabled = true;
+  document.getElementById('logResult').innerHTML = loadingHTML('正在生成施工日志...');
+ 
+  const prompt = `你是一名专业的电力施工资料员，请根据以下信息生成一份规范的电力工程施工日志。
+ 
+基本信息：
+- 日期：${date}
+- 天气：${weather}，气温：${temp || '未填写'}℃
+- 工程名称：${project}
+- 施工部位/工序：${location}
+- 出勤人数：${workers || '未填写'}人
+ 
+今日施工情况（大白话）：
+${content}
+ 
+要求：
+1. 将大白话转化为专业规范的施工日志语言
+2. 严格按以下JSON格式输出，不加任何markdown标记：
+{
+  "施工情况": "当日主要施工内容及完成工程量的专业描述",
+  "质量情况": "质量检查情况及处理措施",
+  "安全情况": "安全措施执行情况及隐患处理",
+  "其他事项": "材料进场、设备使用或其他需记录事项，无则填无",
+  "次日计划": "明日施工计划"
+}`;
+ 
+  try {
+    const data = await callAI('qwen-max', [{ role: 'user', content: prompt }]);
+    const text = data.choices?.[0]?.message?.content || '';
+    const parsed = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+ 
+    const rows = ['施工情况','质量情况','安全情况','其他事项','次日计划'];
+    const tableRows = rows.map(key => `
+      <tr>
+        <th>${key}</th>
+        <td>${parsed[key] || ''}</td>
+      </tr>`).join('');
+ 
+    document.getElementById('logResult').innerHTML = `
+      <div class="result-wrap">
+        <div class="result-head"><span>📋</span><span class="result-head-text">施工日志</span></div>
+        <div class="result-body">
+          <table class="log-table">
+            <tr><th>工程名称</th><td colspan="3">${project}</td></tr>
+            <tr><th>日期</th><td>${date}</td></tr>
+            <tr><th>天气/气温</th><td>${weather} / ${temp || '--'}℃</td></tr>
+            <tr><th>施工部位</th><td>${location}</td></tr>
+            <tr><th>出勤人数</th><td>${workers || '--'}人</td></tr>
+            ${tableRows}
+            <tr><th>记录人</th><td></td><th>负责人签字</th><td></td></tr>
+          </table>
+          <button class="btn-copy" onclick="copyLog()">复制日志内容</button>
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('logResult').innerHTML = `<div class="error-msg">生成失败：${e.message}<br>请稍后重试</div>`;
+  }
+  document.getElementById('logBtn').disabled = false;
+}
+ 
+// 复制日志
+function copyLog() {
+  const table = document.querySelector('.log-table');
+  const text = table ? table.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = '已复制！';
+    setTimeout(() => btn.textContent = '复制日志内容', 2000);
+  });
+}
+ 
+// 调用AI
+async function callAI(model, messages) {
+  const resp = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 2000 })
+  });
+  if(!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || '服务异常，请稍后重试');
+  }
+  return resp.json();
+}
+ 
+// 加载动画
+function loadingHTML(text) {
+  return `<div class="result-wrap"><div class="loading-wrap">
+    <div class="loading-dots">
+      <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
+    </div>
+    <div class="loading-text">${text}</div>
+  </div></div>`;
 }
 </script>
 </body>
