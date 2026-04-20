@@ -112,7 +112,7 @@
   /* 日志表格 */
   .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .log-table th, .log-table td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; vertical-align: top; }
-  .log-table th { background: #f5f5f5; font-weight: 600; color: #1a1a1a; white-space: nowrap; width: 90px; }
+  .log-table th { background: #f5f5f5; font-weight: 600; color: #1a1a1a; white-space: nowrap; width: 80px; }
   .log-table td { color: #1a1a1a; line-height: 1.7; }
   .log-table .content-row td { min-height: 60px; height: 60px; }
  
@@ -128,6 +128,20 @@
   /* 错误 */
   .error-msg { background: #FCEBEB; color: #791F1F; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-top: 12px; }
   .notice { font-size: 11px; color: #aaa; text-align: center; margin-top: 8px; line-height: 1.5; }
+ 
+  /* 打印样式 */
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: fixed; top: 0; left: 0; width: 100%; padding: 20px; }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .log-table th, .log-table td { border: 1px solid #000; padding: 8px; }
+    .log-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+    .print-header { text-align: center; margin-bottom: 16px; }
+    .print-title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
+    .print-meta { font-size: 12px; color: #555; }
+    .print-footer { text-align: center; margin-top: 12px; font-size: 11px; color: #888; }
+  }
 </style>
 </head>
 <body>
@@ -257,6 +271,10 @@
           <div class="label">出勤人数</div>
           <input type="number" id="logWorkers" placeholder="例：8" min="1">
         </div>
+      </div>
+      <div class="form-item">
+        <div class="label">施工单位</div>
+        <input type="text" id="logCompany" placeholder="例：某某电力工程有限公司">
       </div>
       <div class="form-item">
         <div class="label">工程名称</div>
@@ -446,6 +464,7 @@ async function generateLog() {
   const weather = document.getElementById('logWeather').value;
   const temp = document.getElementById('logTemp').value.trim();
   const workers = document.getElementById('logWorkers').value.trim();
+  const company = document.getElementById('logCompany').value.trim();
   const project = document.getElementById('logProject').value.trim();
   const location = document.getElementById('logLocation').value.trim();
   const content = document.getElementById('logContent').value.trim();
@@ -464,6 +483,7 @@ async function generateLog() {
 - 日期：${date}
 - 天气：${weather}，气温：${temp || '未填写'}℃
 - 工程名称：${project}
+- 施工单位：${company || '未填写'}
 - 施工部位/工序：${location}
 - 出勤人数：${workers || '未填写'}人
  
@@ -493,27 +513,44 @@ ${content}
         <td>${parsed[key] || ''}</td>
       </tr>`).join('');
  
+    const pageNum = 1;
+ 
     document.getElementById('logResult').innerHTML = `
       <div class="result-wrap">
         <div class="result-head"><span>📋</span><span class="result-head-text">施工日志</span></div>
         <div class="result-body">
-          <table class="log-table">
-            <tr><th>工程名称</th><td>${project}</td></tr>
-            <tr><th>日期</th><td>${date}</td></tr>
-            <tr><th>天气/气温</th><td>${weather} / ${temp || '--'}℃</td></tr>
-            <tr><th>施工部位</th><td>${location}</td></tr>
-            <tr><th>出勤人数</th><td>${workers || '--'}人</td></tr>
-            ${tableRows}
-            <tr><th>记录人</th><td>&nbsp;</td></tr>
-            <tr><th>负责人签字</th><td>&nbsp;</td></tr>
-          </table>
-          <button class="btn-copy" onclick="copyLog()">复制日志内容</button>
+          <div id="printArea">
+            <div class="print-header">
+              <div class="print-title">施工日志</div>
+              <div class="print-meta">${project}${company ? '　|　' + company : ''}</div>
+            </div>
+            <table class="log-table">
+              <tr><th>工程名称</th><td>${project}</td></tr>
+              <tr><th>施工单位</th><td>${company || '　'}</td></tr>
+              <tr><th>日期</th><td>${date}</td></tr>
+              <tr><th>天气/气温</th><td>${weather} / ${temp || '--'}℃</td></tr>
+              <tr><th>施工部位</th><td>${location}</td></tr>
+              <tr><th>出勤人数</th><td>${workers || '--'}人</td></tr>
+              ${tableRows}
+              <tr><th>记录人</th><td>&nbsp;</td></tr>
+              <tr><th>负责人签字</th><td>&nbsp;</td></tr>
+            </table>
+            <div class="print-footer">第 ${pageNum} 页</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-copy" style="flex:1" onclick="copyLog()">复制内容</button>
+            <button class="btn-copy" style="flex:1;background:#f0f9f4;border-color:#1a3a2e;color:#1a3a2e" onclick="printLog()">打印 / 导出PDF（选另存为PDF）</button>
+          </div>
         </div>
       </div>`;
   } catch(e) {
     document.getElementById('logResult').innerHTML = `<div class="error-msg">生成失败：${e.message}<br>请稍后重试</div>`;
   }
   document.getElementById('logBtn').disabled = false;
+}
+ 
+function printLog() {
+  window.print();
 }
  
 function copyLog() {
