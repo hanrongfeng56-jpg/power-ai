@@ -6,59 +6,94 @@
 <title>安工盾 · 电力施工AI助手</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; padding-bottom: 70px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; min-height: 100vh; }
  
-  /* 顶部栏 */
-  .topbar { background: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 10; }
-  .topbar-icon { width: 32px; height: 32px; border-radius: 8px; background: #e6f1fb; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-  .topbar-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
-  .topbar-sub { font-size: 11px; color: #888; margin-top: 1px; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; }
+  /* 手机端顶部栏 */
+  .topbar { background: #1a3a2e; padding: 14px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .topbar-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: #fff; }
+  .topbar-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; margin-left: auto; flex-shrink: 0; }
  
-  /* 页面容器 */
-  .page { display: none; padding: 12px 16px; max-width: 480px; margin: 0 auto; }
+  /* 手机端底部导航 */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e8e8e8; display: flex; z-index: 10; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; cursor: pointer; color: #aaa; font-size: 11px; gap: 4px; border: none; background: none; }
+  .nav-item.active { color: #1a3a2e; }
+  .nav-icon { font-size: 20px; }
+ 
+  /* 手机端：侧边栏和主内容区隐藏/全屏 */
+  .sidebar { display: none; }
+  .main-content { width: 100%; }
+  .main-header { display: none; }
+  .page { display: none; padding: 12px 16px; padding-bottom: 80px; }
   .page.active { display: block; }
+ 
+  /* 电脑端 */
+  @media (min-width: 768px) {
+    body { display: flex; }
+    .topbar { display: none; }
+    .bottom-nav { display: none; }
+ 
+    /* 侧边栏 */
+    .sidebar { width: 220px; min-height: 100vh; background: #1a3a2e; flex-shrink: 0; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; }
+    .sidebar-brand { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-icon { font-size: 28px; margin-bottom: 8px; }
+    .sidebar-title { font-size: 18px; font-weight: 700; color: #fff; }
+    .sidebar-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+    .sidebar-nav { padding: 16px 12px; flex: 1; }
+    .sidebar-nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 8px; cursor: pointer; color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; }
+    .sidebar-nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .sidebar-nav-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+    .sidebar-nav-icon { font-size: 18px; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: rgba(255,255,255,0.3); }
+    .sidebar-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 6px; vertical-align: middle; }
+ 
+    /* 主内容区 */
+    .main-content { margin-left: 220px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .main-header { display: block; background: #fff; padding: 16px 28px; border-bottom: 1px solid #e8e8e8; }
+    .main-header-title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+    .main-header-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .page { padding: 24px 28px; padding-bottom: 24px; max-width: 900px; }
+  }
  
   /* 卡片 */
   .card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e8e8e8; }
   .label { font-size: 12px; color: #888; margin-bottom: 6px; }
  
-  /* 表单元素 */
+  /* 表单 */
   input[type="text"], input[type="number"], input[type="date"], select, textarea {
     width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px;
     font-size: 13px; color: #1a1a1a; background: #fafafa; font-family: inherit;
   }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: #378ADD; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #1a3a2e; }
   textarea { resize: none; line-height: 1.5; }
- 
-  /* 两列表单 */
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   .form-item { margin-bottom: 10px; }
   .form-item:last-child { margin-bottom: 0; }
  
   /* 按钮 */
-  .btn-primary { width: 100%; padding: 12px; background: #185FA5; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; }
-  .btn-primary:hover { background: #0C447C; }
+  .btn-primary { width: 100%; padding: 12px; background: #1a3a2e; border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; }
+  .btn-primary:hover { background: #0f2a1e; }
   .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-  .btn-copy { width: 100%; padding: 10px; background: #f0f6ff; border: 1px solid #b5d4f4; border-radius: 8px; color: #185FA5; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-  .btn-copy:hover { background: #e6f1fb; }
-  .btn-upload { padding: 7px 14px; background: #e6f1fb; color: #185FA5; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-copy { width: 100%; padding: 10px; background: #f0f9f4; border: 1px solid #9fe1cb; border-radius: 8px; color: #0f6e56; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .btn-copy:hover { background: #e1f5ee; }
+  .btn-upload { padding: 7px 14px; background: #e1f5ee; color: #0f6e56; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
  
   /* 上传区 */
   .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; background: #fafafa; }
-  .upload-zone:hover { border-color: #378ADD; background: #f0f6ff; }
+  .upload-zone:hover { border-color: #1a3a2e; background: #f0f9f4; }
   .upload-text { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 10px; }
   .preview-wrap { border-radius: 10px; overflow: hidden; border: 1px solid #e8e8e8; margin-bottom: 10px; }
   .preview-img { width: 100%; max-height: 180px; object-fit: cover; display: block; }
   .preview-bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: #fafafa; }
   .preview-name { font-size: 12px; color: #888; }
   .btn-remove { font-size: 12px; color: #e24b4a; background: none; border: none; cursor: pointer; }
-  .mode-tip { font-size: 11px; color: #1D9E75; background: #E1F5EE; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; }
+  .mode-tip { font-size: 11px; color: #0f6e56; background: #e1f5ee; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; }
  
   /* 结果区 */
   .result-wrap { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; overflow: hidden; margin-top: 12px; }
-  .result-head { padding: 10px 16px; background: #e6f1fb; border-bottom: 1px solid #b5d4f4; display: flex; align-items: center; gap: 8px; }
-  .result-head-text { font-size: 13px; font-weight: 600; color: #0C447C; }
+  .result-head { padding: 10px 16px; background: #e1f5ee; border-bottom: 1px solid #9fe1cb; display: flex; align-items: center; gap: 8px; }
+  .result-head-text { font-size: 13px; font-weight: 600; color: #0f6e56; }
   .result-body { padding: 14px 16px; }
   .risk-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; }
   .risk-item:last-child { border-bottom: none; }
@@ -71,7 +106,7 @@
   .divider { height: 1px; background: #f0f0f0; margin: 10px 0; }
   .suggest-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
   .suggest-item { font-size: 13px; color: #555; line-height: 1.7; padding-left: 12px; position: relative; margin-bottom: 3px; }
-  .suggest-item::before { content: "·"; position: absolute; left: 0; color: #378ADD; font-weight: bold; }
+  .suggest-item::before { content: "·"; position: absolute; left: 0; color: #1a3a2e; font-weight: bold; }
  
   /* 日志表格 */
   .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -83,7 +118,7 @@
   /* 加载 */
   .loading-wrap { text-align: center; padding: 28px; }
   .loading-dots { display: inline-flex; gap: 6px; }
-  .loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #378ADD; animation: blink 1.2s infinite; }
+  .loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #1a3a2e; animation: blink 1.2s infinite; }
   .loading-dot:nth-child(2) { animation-delay: .2s; }
   .loading-dot:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
@@ -92,16 +127,11 @@
   /* 错误 */
   .error-msg { background: #FCEBEB; color: #791F1F; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-top: 12px; }
   .notice { font-size: 11px; color: #aaa; text-align: center; margin-top: 8px; line-height: 1.5; }
- 
-  /* 底部导航 */
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e8e8e8; display: flex; z-index: 10; }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; cursor: pointer; color: #aaa; font-size: 11px; gap: 4px; border: none; background: none; }
-  .nav-item.active { color: #185FA5; }
-  .nav-icon { font-size: 20px; }
 </style>
 </head>
 <body>
  
+<!-- 手机端顶部栏 -->
 <div class="topbar">
   <div class="topbar-icon">🛡️</div>
   <div>
@@ -111,97 +141,120 @@
   <div class="dot"></div>
 </div>
  
-<!-- 页面一：安全分析 -->
-<div class="page active" id="page-safety">
+<!-- 电脑端侧边栏 -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-icon">🛡️</div>
+    <div class="sidebar-title">安工盾</div>
+    <div class="sidebar-sub">电力施工AI助手</div>
+  </div>
+  <div class="sidebar-nav">
+    <button class="sidebar-nav-item active" id="snav-safety" onclick="switchPage('safety')">
+      <span class="sidebar-nav-icon">🔍</span> 安全分析
+    </button>
+    <button class="sidebar-nav-item" id="snav-log" onclick="switchPage('log')">
+      <span class="sidebar-nav-icon">📋</span> 日志生成
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <span class="sidebar-dot"></span>系统运行正常
+  </div>
+</div>
  
-  <div class="card">
-    <div id="modeTip" class="mode-tip" style="display:none"></div>
-    <div id="uploadArea">
-      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-text">📷 点击拍照或上传现场照片<br>AI自动识别安全隐患和违规</div>
-        <button class="btn-upload">选择照片</button>
+<!-- 电脑端主内容区 -->
+<div class="main-content">
+  <div class="main-header">
+    <div class="main-header-title" id="mainTitle">现场安全分析</div>
+    <div class="main-header-sub" id="mainSub">上传现场照片或输入描述，AI自动识别安全隐患</div>
+  </div>
+ 
+  <!-- 页面一：安全分析 -->
+  <div class="page active" id="page-safety">
+    <div class="card">
+      <div id="modeTip" class="mode-tip" style="display:none"></div>
+      <div id="uploadArea">
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-text">📷 点击拍照或上传现场照片<br>AI自动识别安全隐患和违规</div>
+          <button class="btn-upload">选择照片</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
       </div>
-      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
-    </div>
-    <div id="previewArea" style="display:none">
-      <div class="preview-wrap">
-        <img id="previewImg" class="preview-img" src="" alt="现场照片">
-        <div class="preview-bar">
-          <span class="preview-name" id="fileName"></span>
-          <button class="btn-remove" onclick="removePhoto()">重新选择</button>
+      <div id="previewArea" style="display:none">
+        <div class="preview-wrap">
+          <img id="previewImg" class="preview-img" src="" alt="现场照片">
+          <div class="preview-bar">
+            <span class="preview-name" id="fileName"></span>
+            <button class="btn-remove" onclick="removePhoto()">重新选择</button>
+          </div>
         </div>
       </div>
+      <div class="form-item" style="margin-top:10px">
+        <div class="label">补充描述（可选，没有照片时必填）</div>
+        <textarea id="safetyDesc" rows="2" placeholder="例：10kV线路下方动土作业，距导线约4米"></textarea>
+      </div>
+      <button class="btn-primary" id="safetyBtn" onclick="analyzeSafety()">分析现场安全情况</button>
+      <div class="notice">分析结果仅供参考，重大决策请咨询专业工程师</div>
     </div>
-    <div class="form-item" style="margin-top:10px">
-      <div class="label">补充描述（可选，没有照片时必填）</div>
-      <textarea id="safetyDesc" rows="2" placeholder="例：10kV线路下方动土作业，距导线约4米"></textarea>
-    </div>
-    <button class="btn-primary" id="safetyBtn" onclick="analyzeSafety()">分析现场安全情况</button>
-    <div class="notice">分析结果仅供参考，重大决策请咨询专业工程师</div>
+    <div id="safetyResult"></div>
   </div>
  
-  <div id="safetyResult"></div>
-</div>
- 
-<!-- 页面二：日志生成 -->
-<div class="page" id="page-log">
- 
-  <div class="card">
-    <div class="form-row">
-      <div>
-        <div class="label">日期</div>
-        <input type="date" id="logDate">
+  <!-- 页面二：日志生成 -->
+  <div class="page" id="page-log">
+    <div class="card">
+      <div class="form-row">
+        <div>
+          <div class="label">日期</div>
+          <input type="date" id="logDate">
+        </div>
+        <div>
+          <div class="label">天气</div>
+          <select id="logWeather">
+            <option>晴</option>
+            <option>多云</option>
+            <option>阴</option>
+            <option>小雨</option>
+            <option>中雨</option>
+            <option>大雨</option>
+            <option>雷雨</option>
+          </select>
+        </div>
       </div>
-      <div>
-        <div class="label">天气</div>
-        <select id="logWeather">
-          <option>晴</option>
-          <option>多云</option>
-          <option>阴</option>
-          <option>小雨</option>
-          <option>中雨</option>
-          <option>大雨</option>
-          <option>雷雨</option>
-        </select>
+      <div class="form-row">
+        <div>
+          <div class="label">气温（℃）</div>
+          <input type="text" id="logTemp" placeholder="例：18~26">
+        </div>
+        <div>
+          <div class="label">出勤人数</div>
+          <input type="number" id="logWorkers" placeholder="例：8" min="1">
+        </div>
       </div>
-    </div>
-    <div class="form-row">
-      <div>
-        <div class="label">气温（℃）</div>
-        <input type="text" id="logTemp" placeholder="例：18~26">
+      <div class="form-item">
+        <div class="label">工程名称</div>
+        <input type="text" id="logProject" placeholder="例：某某110kV输变电工程">
       </div>
-      <div>
-        <div class="label">出勤人数</div>
-        <input type="number" id="logWorkers" placeholder="例：8" min="1">
+      <div class="form-item">
+        <div class="label">施工部位/工序</div>
+        <input type="text" id="logLocation" placeholder="例：3号杆基础浇筑">
       </div>
+      <div class="form-item">
+        <div class="label">今天干了什么（用大白话描述）</div>
+        <textarea id="logContent" rows="4" placeholder="例：今天完成了3号和4号杆的基础浇筑，下午对接地网进行了敷设，完成约50米，工人都戴了安全帽，没有出现安全问题"></textarea>
+      </div>
+      <button class="btn-primary" id="logBtn" onclick="generateLog()">生成施工日志</button>
     </div>
-    <div class="form-item">
-      <div class="label">工程名称</div>
-      <input type="text" id="logProject" placeholder="例：某某110kV输变电工程">
-    </div>
-    <div class="form-item">
-      <div class="label">施工部位/工序</div>
-      <input type="text" id="logLocation" placeholder="例：3号杆基础浇筑">
-    </div>
-    <div class="form-item">
-      <div class="label">今天干了什么（用大白话描述）</div>
-      <textarea id="logContent" rows="4" placeholder="例：今天完成了3号和4号杆的基础浇筑，下午对接地网进行了敷设，完成约50米，工人都戴了安全帽，没有出现安全问题"></textarea>
-    </div>
-    <button class="btn-primary" id="logBtn" onclick="generateLog()">生成施工日志</button>
+    <div id="logResult"></div>
   </div>
  
-  <div id="logResult"></div>
-</div>
+</div><!-- end main-content -->
  
-<!-- 底部导航 -->
+<!-- 手机端底部导航 -->
 <div class="bottom-nav">
   <button class="nav-item active" id="nav-safety" onclick="switchPage('safety')">
-    <span class="nav-icon">🔍</span>
-    安全分析
+    <span class="nav-icon">🔍</span>安全分析
   </button>
   <button class="nav-item" id="nav-log" onclick="switchPage('log')">
-    <span class="nav-icon">📋</span>
-    日志生成
+    <span class="nav-icon">📋</span>日志生成
   </button>
 </div>
  
@@ -210,18 +263,24 @@ const WORKER_URL = 'https://power-ai-proxy.hanrongfeng56.workers.dev';
 let imageBase64 = null;
 let imageMediaType = 'image/jpeg';
  
-// 初始化日期为今天
 document.getElementById('logDate').valueAsDate = new Date();
  
-// 页面切换
+const pageTitles = {
+  safety: { title: '现场安全分析', sub: '上传现场照片或输入描述，AI自动识别安全隐患' },
+  log:    { title: '施工日志生成', sub: '用大白话描述今天工作，AI自动生成规范日志' }
+};
+ 
 function switchPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
+  document.getElementById('snav-' + name).classList.add('active');
+  document.getElementById('mainTitle').textContent = pageTitles[name].title;
+  document.getElementById('mainSub').textContent = pageTitles[name].sub;
 }
  
-// 上传图片
 function handleFile(e) {
   const file = e.target.files[0];
   if(!file) return;
@@ -248,7 +307,6 @@ function removePhoto() {
   document.getElementById('safetyResult').innerHTML = '';
 }
  
-// 安全分析
 async function analyzeSafety() {
   const desc = document.getElementById('safetyDesc').value.trim();
   if(!imageBase64 && !desc) {
@@ -318,7 +376,6 @@ ${desc ? '现场补充说明：' + desc : ''}
   document.getElementById('safetyBtn').disabled = false;
 }
  
-// 日志生成
 async function generateLog() {
   const date = document.getElementById('logDate').value;
   const weather = document.getElementById('logWeather').value;
@@ -376,7 +433,7 @@ ${content}
         <div class="result-head"><span>📋</span><span class="result-head-text">施工日志</span></div>
         <div class="result-body">
           <table class="log-table">
-            <tr><th>工程名称</th><td colspan="3">${project}</td></tr>
+            <tr><th>工程名称</th><td>${project}</td></tr>
             <tr><th>日期</th><td>${date}</td></tr>
             <tr><th>天气/气温</th><td>${weather} / ${temp || '--'}℃</td></tr>
             <tr><th>施工部位</th><td>${location}</td></tr>
@@ -394,7 +451,6 @@ ${content}
   document.getElementById('logBtn').disabled = false;
 }
  
-// 复制日志
 function copyLog() {
   const table = document.querySelector('.log-table');
   const text = table ? table.innerText : '';
@@ -405,7 +461,6 @@ function copyLog() {
   });
 }
  
-// 调用AI
 async function callAI(model, messages) {
   const resp = await fetch(WORKER_URL, {
     method: 'POST',
@@ -419,7 +474,6 @@ async function callAI(model, messages) {
   return resp.json();
 }
  
-// 加载动画
 function loadingHTML(text) {
   return `<div class="result-wrap"><div class="loading-wrap">
     <div class="loading-dots">
@@ -431,4 +485,3 @@ function loadingHTML(text) {
 </script>
 </body>
 </html>
- 
