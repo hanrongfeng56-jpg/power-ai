@@ -53,7 +53,8 @@
     .main-header { display: block; background: #fff; padding: 16px 28px; border-bottom: 1px solid #e8e8e8; }
     .main-header-title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
     .main-header-sub { font-size: 12px; color: #888; margin-top: 2px; }
-    .page { padding: 24px 28px; padding-bottom: 24px; max-width: 900px; }
+    .page { padding: 24px 28px; padding-bottom: 24px; width: 100%; }
+    .card { max-width: 860px; }
   }
  
   /* 卡片 */
@@ -149,7 +150,10 @@
     <div class="sidebar-sub">电力施工AI助手</div>
   </div>
   <div class="sidebar-nav">
-    <button class="sidebar-nav-item active" id="snav-safety" onclick="switchPage('safety')">
+    <button class="sidebar-nav-item active" id="snav-home" onclick="switchPage('home')">
+      <span class="sidebar-nav-icon">🏠</span> 首页
+    </button>
+    <button class="sidebar-nav-item" id="snav-safety" onclick="switchPage('safety')">
       <span class="sidebar-nav-icon">🔍</span> 安全分析
     </button>
     <button class="sidebar-nav-item" id="snav-log" onclick="switchPage('log')">
@@ -168,8 +172,33 @@
     <div class="main-header-sub" id="mainSub">上传现场照片或输入描述，AI自动识别安全隐患</div>
   </div>
  
+  <!-- 页面零：首页 -->
+  <div class="page active" id="page-home">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px">
+      <div class="card" style="cursor:pointer;border:1.5px solid #1a3a2e" onclick="switchPage('safety')">
+        <div style="font-size:28px;margin-bottom:8px">🔍</div>
+        <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:4px">现场安全分析</div>
+        <div style="font-size:12px;color:#888;line-height:1.5">上传现场照片，AI自动识别安全隐患、违规行为，输出风险等级和整改建议</div>
+      </div>
+      <div class="card" style="cursor:pointer;border:1.5px solid #1a3a2e" onclick="switchPage('log')">
+        <div style="font-size:28px;margin-bottom:8px">📋</div>
+        <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:4px">施工日志生成</div>
+        <div style="font-size:12px;color:#888;line-height:1.5">用大白话描述今天的工作，AI自动生成规范的电力施工日志表格</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:600;color:#1a1a1a">每日安全知识</div>
+        <div style="font-size:11px;color:#888" id="knowledgeDate"></div>
+      </div>
+      <div id="knowledgeContent">
+        <div style="text-align:center;padding:20px;color:#aaa;font-size:13px">正在加载今日安全知识...</div>
+      </div>
+    </div>
+  </div>
+ 
   <!-- 页面一：安全分析 -->
-  <div class="page active" id="page-safety">
+  <div class="page" id="page-safety">
     <div class="card">
       <div id="modeTip" class="mode-tip" style="display:none"></div>
       <div id="uploadArea">
@@ -250,7 +279,10 @@
  
 <!-- 手机端底部导航 -->
 <div class="bottom-nav">
-  <button class="nav-item active" id="nav-safety" onclick="switchPage('safety')">
+  <button class="nav-item active" id="nav-home" onclick="switchPage('home')">
+    <span class="nav-icon">🏠</span>首页
+  </button>
+  <button class="nav-item" id="nav-safety" onclick="switchPage('safety')">
     <span class="nav-icon">🔍</span>安全分析
   </button>
   <button class="nav-item" id="nav-log" onclick="switchPage('log')">
@@ -264,8 +296,10 @@ let imageBase64 = null;
 let imageMediaType = 'image/jpeg';
  
 document.getElementById('logDate').valueAsDate = new Date();
+window.addEventListener('load', loadDailyKnowledge);
  
 const pageTitles = {
+  home:   { title: '首页', sub: '欢迎使用安工盾 · 电力施工AI助手' },
   safety: { title: '现场安全分析', sub: '上传现场照片或输入描述，AI自动识别安全隐患' },
   log:    { title: '施工日志生成', sub: '用大白话描述今天工作，AI自动生成规范日志' }
 };
@@ -279,6 +313,38 @@ function switchPage(name) {
   document.getElementById('snav-' + name).classList.add('active');
   document.getElementById('mainTitle').textContent = pageTitles[name].title;
   document.getElementById('mainSub').textContent = pageTitles[name].sub;
+}
+ 
+async function loadDailyKnowledge() {
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('knowledgeDate').textContent = today;
+  const cached = localStorage.getItem('knowledge_date');
+  if(cached === today) {
+    const text = localStorage.getItem('knowledge_text');
+    if(text) { renderKnowledge(text); return; }
+  }
+  try {
+    const data = await callAI('qwen-max', [{
+      role: 'user',
+      content: `你是电力施工安全专家，请生成一条今日电力施工安全知识，要求：
+1. 内容具体实用，针对电力施工一线班组长
+2. 包含一个具体的安全要点和对应的规范依据
+3. 语言简洁，100字以内
+4. 直接输出内容，不要标题和序号`
+    }]);
+    const text = data.choices?.[0]?.message?.content || '';
+    localStorage.setItem('knowledge_date', today);
+    localStorage.setItem('knowledge_text', text);
+    renderKnowledge(text);
+  } catch(e) {
+    document.getElementById('knowledgeContent').innerHTML =
+      '<div style="font-size:13px;color:#aaa;padding:8px">暂时无法加载，请稍后刷新</div>';
+  }
+}
+ 
+function renderKnowledge(text) {
+  document.getElementById('knowledgeContent').innerHTML = `
+    <div style="font-size:13px;color:#1a1a1a;line-height:1.8;padding:4px 0;border-left:3px solid #1a3a2e;padding-left:12px">${text}</div>`;
 }
  
 function handleFile(e) {
