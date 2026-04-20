@@ -296,7 +296,6 @@ let imageBase64 = null;
 let imageMediaType = 'image/jpeg';
  
 document.getElementById('logDate').valueAsDate = new Date();
-window.addEventListener('load', loadDailyKnowledge);
  
 const pageTitles = {
   home:   { title: '首页', sub: '欢迎使用安工盾 · 电力施工AI助手' },
@@ -548,6 +547,8 @@ function loadingHTML(text) {
     <div class="loading-text">${text}</div>
   </div></div>`;
 }
+ 
+loadDailyKnowledge();
 </script>
 </body>
 </html>
